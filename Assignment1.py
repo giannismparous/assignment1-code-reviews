@@ -633,6 +633,7 @@ def make_plots(X, result):
 # REFLECTION: contributions, tasks completed, and external resources used.
 # YOUR ANSWER HERE
 # Name: Ioannis Barous
+# Student ID: 2252832
 #
 # Tasks completed: all parts. Part 1 (matrix operations, eigensystem, trace
 # proof, matrix inverse), Part 2 (normalizing the distribution and its
