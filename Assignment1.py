@@ -6,615 +6,483 @@ Functions must not mutate inputs, prompt for input, or perform network I/O.
 Only code inside the main guard should save/show figures.
 """
 import numpy as np
-from matplotlib.figure import Figure
-from matplotlib.lines import Line2D
 
 
 # PART 1 (20 points), Q1: Show computations for the given A and B.
-# Given A = [[3, 4],      B = [[1,  2],
-#            [2, 1]]           [0, -1]]
+# YOUR ANSWER HERE
+# A = [[3, 4], [2, 1]], B = [[1, 2], [0, -1]]
 #
-# Rule: (XY)_ij = sum_k X_ik * Y_kj  (row i of X dotted with column j of Y).
+# AB = [[3*1 + 4*0, 3*2 + 4*(-1)],
+#       [2*1 + 1*0, 2*2 + 1*(-1)]]
+#    = [[3, 2], [2, 3]]
 #
-# AB:
-#   (AB)_11 = 3*1 + 4*0    = 3 + 0  = 3
-#   (AB)_12 = 3*2 + 4*(-1) = 6 - 4  = 2
-#   (AB)_21 = 2*1 + 1*0    = 2 + 0  = 2
-#   (AB)_22 = 2*2 + 1*(-1) = 4 - 1  = 3
-#   => AB = [[3, 2],
-#            [2, 3]]
+# BA = [[1*3 + 2*2,    1*4 + 2*1],
+#       [0*3 + (-1)*2, 0*4 + (-1)*1]]
+#    = [[7, 6], [-2, -1]]
+# AB != BA, so matrix multiplication is not commutative.
 #
-# BA:
-#   (BA)_11 = 1*3 + 2*2    = 3 + 4  = 7
-#   (BA)_12 = 1*4 + 2*1    = 4 + 2  = 6
-#   (BA)_21 = 0*3 + (-1)*2 = 0 - 2  = -2
-#   (BA)_22 = 0*4 + (-1)*1 = 0 - 1  = -1
-#   => BA = [[ 7,  6],
-#            [-2, -1]]
-#   Note AB != BA: matrix multiplication is not commutative.
+# A + B = [[3+1, 4+2], [2+0, 1+(-1)]] = [[4, 6], [2, 0]]
+# (A + B)^T = [[4, 2], [6, 0]]
 #
-# (A+B)^T:
-#   A + B = [[3+1, 4+2], [2+0, 1+(-1)]] = [[4, 6], [2, 0]]
-#   Transpose swaps rows and columns, (X^T)_ij = X_ji:
-#   => (A+B)^T = [[4, 2],
-#                 [6, 0]]
+# B^T = [[1, 0], [2, -1]]
+# A B^T = [[3*1 + 4*2, 3*0 + 4*(-1)],
+#          [2*1 + 1*2, 2*0 + 1*(-1)]]
+#       = [[11, -4], [4, -1]]
 #
-# AB^T:
-#   B^T = [[1,  0],
-#          [2, -1]]
-#   (AB^T)_11 = 3*1 + 4*2    = 3 + 8  = 11
-#   (AB^T)_12 = 3*0 + 4*(-1) = 0 - 4  = -4
-#   (AB^T)_21 = 2*1 + 1*2    = 2 + 2  = 4
-#   (AB^T)_22 = 2*0 + 1*(-1) = 0 - 1  = -1
-#   => AB^T = [[11, -4],
-#              [ 4, -1]]
-#
-# Traces (sum of diagonal entries):
-#   trace(A)  = 3 + 1 = 4
-#   trace(AB) = 3 + 3 = 6
-#   Check: trace(BA) = 7 + (-1) = 6 = trace(AB), as Q3 proves in general.
+# trace(A) = 3 + 1 = 4
+# trace(AB) = 3 + 3 = 6
+# Check: trace(BA) = 7 + (-1) = 6 = trace(AB), as Q3 predicts.
 def matrix_operations(A=None, B=None):
     """Return AB, BA, (A+B).T, A@B.T, trace(A), trace(AB).
 
     Defaults: A=[[3,4],[2,1]], B=[[1,2],[0,-1]]. Other inputs are square
     real matrices of matching size. Return a tuple in the specified order.
     """
-    # Step 1: fill in the defaults from the problem statement.
+    # YOUR CODE HERE
     if A is None:
         A = [[3, 4], [2, 1]]
     if B is None:
         B = [[1, 2], [0, -1]]
-
-    # Step 2: copy into new float arrays so the caller's inputs are never mutated.
+    # np.array copies, so the caller's inputs are never modified.
     A = np.array(A, dtype=float)
     B = np.array(B, dtype=float)
-
-    # Step 3: check that both inputs are square and of the same size,
-    # because AB, BA and A+B are all needed.
-    if A.ndim != 2 or A.shape[0] != A.shape[1]:
-        raise ValueError("A must be a square 2D matrix")
-    if B.shape != A.shape:
-        raise ValueError("B must be square with the same shape as A")
-
-    # Step 4: compute each requested quantity (same order as the derivation above).
     AB = A @ B
     BA = B @ A
     sum_transpose = (A + B).T
-    AB_transpose = A @ B.T
-    trace_A = float(np.trace(A))
-    trace_AB = float(np.trace(AB))
-
-    return AB, BA, sum_transpose, AB_transpose, trace_A, trace_AB
+    A_Bt = A @ B.T
+    return AB, BA, sum_transpose, A_Bt, float(np.trace(A)), float(np.trace(AB))
 
 
 # P1 Q2: Derive the given M eigenpairs and verify Mv=lambda*v.
-# Given M = [[ 2, -1],
-#            [-1,  2]]
+# YOUR ANSWER HERE
+# M = [[2, -1], [-1, 2]]
 #
-# Step 1: characteristic polynomial, det(M - lambda*I) = 0.
-#   M - lambda*I = [[2-lambda,   -1    ],
-#                   [  -1,     2-lambda]]
-#   det = (2-lambda)(2-lambda) - (-1)(-1)
-#       = (2-lambda)^2 - 1
-#       = lambda^2 - 4*lambda + 4 - 1
-#       = lambda^2 - 4*lambda + 3
+# Characteristic polynomial:
+# det(M - lambda I) = (2 - lambda)^2 - (-1)(-1)
+#                   = lambda^2 - 4 lambda + 4 - 1
+#                   = lambda^2 - 4 lambda + 3
+#                   = (lambda - 1)(lambda - 3)
+# Eigenvalues: lambda1 = 1, lambda2 = 3.
 #
-# Step 2: solve lambda^2 - 4*lambda + 3 = 0.
-#   (lambda - 1)(lambda - 3) = 0  =>  lambda_1 = 1, lambda_2 = 3.
-#   Check: sum = 1 + 3 = 4 = trace(M); product = 1*3 = 3 = det(M) = 4 - 1.
+# lambda1 = 1: M - I = [[1, -1], [-1, 1]]
+#   Row 1 gives v1 - v2 = 0, so v1 = v2. Eigenvector v = [1, 1].
+# lambda2 = 3: M - 3I = [[-1, -1], [-1, -1]]
+#   Row 1 gives -v1 - v2 = 0, so v2 = -v1. Eigenvector v = [1, -1].
 #
-# Step 3: eigenvectors, solve (M - lambda*I) v = 0.
-#   lambda_1 = 1:  M - I = [[ 1, -1],
-#                           [-1,  1]]
-#     Row 1: v1 - v2 = 0  =>  v1 = v2  =>  v = [1, 1]  (unit: [1, 1]/sqrt(2)).
-#   lambda_2 = 3:  M - 3I = [[-1, -1],
-#                            [-1, -1]]
-#     Row 1: -v1 - v2 = 0  =>  v2 = -v1  =>  v = [1, -1]  (unit: [1, -1]/sqrt(2)).
-#   The two eigenvectors are orthogonal ([1,1].[1,-1] = 1 - 1 = 0), which is
-#   expected because M is symmetric.
+# Verify Mv = lambda v:
+# M [1, 1]  = [2*1 + (-1)*1, (-1)*1 + 2*1]     = [1, 1]  = 1 * [1, 1]
+# M [1, -1] = [2*1 + (-1)(-1), (-1)*1 + 2(-1)] = [3, -3] = 3 * [1, -1]
 #
-# Step 4: verify M v = lambda v.
-#   M [1, 1]  = [2*1 + (-1)*1, (-1)*1 + 2*1]    = [1, 1]   = 1 * [1, 1]   OK
-#   M [1, -1] = [2*1 + (-1)(-1), (-1)*1 + 2(-1)] = [3, -3] = 3 * [1, -1]  OK
-#   With unit vectors: M [0.7071, 0.7071] = [0.7071, 0.7071] = 1 * v1, and
-#   M [0.7071, -0.7071] = [2.1213, -2.1213] = 3 * v2.
+# The eigenvectors are orthogonal ([1,1].[1,-1] = 0), as expected for a
+# symmetric matrix. The code uses np.linalg.eigh, which is built for
+# symmetric matrices. It returns real eigenvalues in ascending order and an
+# orthonormal set of eigenvector columns, so a repeated eigenvalue still gets
+# a full basis of its eigenspace. eigh returns unit vectors, so it reports
+# [1, 1]/sqrt(2) and [1, -1]/sqrt(2) up to sign.
 def eigensystem(M=None):
     """Return (values, vectors) for real symmetric M (default [[2,-1],[-1,2]]).
 
     Vectors are columns paired with values; order, sign, and nonzero scale
     are free. Vectors must span each eigenspace, including repeated roots.
     """
-    # Step 1: fill in the default matrix from the problem statement.
+    # YOUR CODE HERE
     if M is None:
         M = [[2, -1], [-1, 2]]
-
-    # Step 2: copy into a new float array so the caller's input is never mutated.
     M = np.array(M, dtype=float)
-
-    # Step 3: check the input. np.linalg.eigh reads only one triangle of M, so
-    # a non-symmetric input would silently give wrong answers; reject it instead.
-    if M.ndim != 2 or M.shape[0] != M.shape[1]:
-        raise ValueError("M must be a square 2D matrix")
-    if not np.allclose(M, M.T):
-        raise ValueError("M must be symmetric")
-
-    # Step 4: eigh solves det(M - lambda*I) = 0 for a symmetric matrix. It
-    # returns real eigenvalues in ascending order and orthonormal eigenvectors
-    # as the columns of `vectors` (column i pairs with values[i]). Because the
-    # columns are orthonormal, a repeated eigenvalue still gets as many
-    # independent vectors as its multiplicity, so each eigenspace is spanned
-    # (e.g. M = I gives the full basis [[1, 0], [0, 1]]).
     values, vectors = np.linalg.eigh(M)
-
     return values, vectors
 
 
 # P1 Q3: Prove trace(AB)=trace(BA) for compatible matrices.
-# Let A be m x n and B be n x m, so AB is m x m and BA is n x n (both square,
-# so both traces are defined).
+# YOUR ANSWER HERE
+# The result holds for any A of size m x n and B of size n x m. The matrices
+# need not be square. AB is m x m and BA is n x n, so both traces are defined
+# even when m != n.
 #
-# Step 1: write the diagonal entries using the product rule.
-#   (AB)_ii = sum_{k=1..n} A_ik * B_ki          for i = 1..m
-#   (BA)_kk = sum_{i=1..m} B_ki * A_ik          for k = 1..n
+# By the definition of the matrix product, (AB)_ii = sum_{k=1..n} A_ik B_ki.
+# The trace sums the diagonal entries, so
+#   trace(AB) = sum_{i=1..m} sum_{k=1..n} A_ik B_ki
 #
-# Step 2: the trace is the sum of the diagonal entries.
-#   trace(AB) = sum_{i=1..m} (AB)_ii = sum_{i=1..m} sum_{k=1..n} A_ik * B_ki
+# The sums are finite, so their order can be swapped. Scalar multiplication
+# commutes, so A_ik B_ki = B_ki A_ik. This gives
+#   trace(AB) = sum_{k=1..n} sum_{i=1..m} B_ki A_ik
 #
-# Step 3: the double sum is finite, so the order of summation can be swapped,
-# and scalar multiplication commutes (A_ik * B_ki = B_ki * A_ik):
-#   trace(AB) = sum_{k=1..n} sum_{i=1..m} B_ki * A_ik
+# The inner sum is (BA)_kk = sum_{i=1..m} B_ki A_ik by the same definition.
+# Therefore
+#   trace(AB) = sum_{k=1..n} (BA)_kk = trace(BA)
 #
-# Step 4: the inner sum is exactly (BA)_kk from Step 1, so
-#   trace(AB) = sum_{k=1..n} (BA)_kk = trace(BA).   QED
-#
-# Example from Q1: trace(AB) = 3 + 3 = 6 and trace(BA) = 7 + (-1) = 6.
-# Note: AB and BA can even have different sizes (m x m vs n x n), but their
-# traces are always equal.
+# Q1 confirms this: trace(AB) = 6 = trace(BA).
 
 # P1 Q4: Show the given C is invertible, and compute its inverse step by step.
-# Given C = [[4, 7],
-#            [2, 6]]
+# YOUR ANSWER HERE
+# C = [[4, 7], [2, 6]]
 #
-# Step 1: a square matrix is invertible if and only if det(C) != 0.
-#   det(C) = 4*6 - 7*2 = 24 - 14 = 10  != 0  =>  C is invertible.
+# Invertibility: det(C) = 4*6 - 7*2 = 24 - 14 = 10 != 0. A square matrix is
+# invertible if and only if its determinant is nonzero, so C is invertible.
 #
-# Step 2: for a 2x2 matrix [[a, b], [c, d]] with ad - bc != 0,
-#   inverse = (1 / (ad - bc)) * adj(C),  where adj(C) = [[d, -b], [-c, a]]
-#   (swap the diagonal entries, negate the off-diagonal entries).
-#   Here a=4, b=7, c=2, d=6:
-#   adj(C) = [[ 6, -7],
-#             [-2,  4]]
-#   C^-1 = (1/10) * [[ 6, -7],  = [[ 0.6, -0.7],
-#                    [-2,  4]]     [-0.2,  0.4]]
+# Inverse: for a 2x2 matrix [[a, b], [c, d]] with nonzero determinant, the
+# adjugate formula gives
+#   [[a, b], [c, d]]^-1 = (1 / (ad - bc)) [[d, -b], [-c, a]]
+# Here a = 4, b = 7, c = 2, d = 6, so
+#   C^-1 = (1/10) [[6, -7], [-2, 4]] = [[0.6, -0.7], [-0.2, 0.4]]
 #
-# Step 3: verify C * C^-1 = I.
-#   (1,1): 4*0.6 + 7*(-0.2)  = 2.4 - 1.4 = 1
-#   (1,2): 4*(-0.7) + 7*0.4  = -2.8 + 2.8 = 0
-#   (2,1): 2*0.6 + 6*(-0.2)  = 1.2 - 1.2 = 0
-#   (2,2): 2*(-0.7) + 6*0.4  = -1.4 + 2.4 = 1
-#   => C * C^-1 = [[1, 0], [0, 1]] = I.  OK
+# The code uses np.linalg.inv instead of this formula because the adjugate
+# formula above only covers 2x2 matrices and the function must handle n x n.
+#
+# Verify C C^-1 = I:
+#   [[4*0.6 + 7*(-0.2), 4*(-0.7) + 7*0.4],
+#    [2*0.6 + 6*(-0.2), 2*(-0.7) + 6*0.4]]
+# = [[2.4 - 1.4, -2.8 + 2.8], [1.2 - 1.2, -1.4 + 2.4]] = [[1, 0], [0, 1]]
 def matrix_inverse(C=None):
     """Return inverse of nonsingular square C; default C=[[4,7],[2,6]]."""
-    # Step 1: fill in the default matrix from the problem statement.
+    # YOUR CODE HERE
     if C is None:
         C = [[4, 7], [2, 6]]
-
-    # Step 2: copy into a new float array so the caller's input is never mutated.
+    # Float copy, so the caller's input is never modified.
     C = np.array(C, dtype=float)
-
-    # Step 3: the inverse is only defined for square matrices.
-    if C.ndim != 2 or C.shape[0] != C.shape[1]:
-        raise ValueError("C must be a square 2D matrix")
-
-    # Step 4: compute the inverse. The 2x2 adjugate formula above does not
-    # generalize to any size, so use np.linalg.inv, which works for any n x n
-    # matrix and raises np.linalg.LinAlgError if C is singular (det(C) = 0).
     return np.linalg.inv(C)
 
 
 # PART 2 (50 points), Q1: Normalize c*3**k/k!, derive expectation and variance.
-# P(X=k) = c * r^k / k!,  k = 0, 1, 2, ...   (here r = rate = 3).
+# YOUR ANSWER HERE
+# P(X = k) = c 3^k / k! for k = 0, 1, 2, ...
+# The derivation below uses a general rate r > 0 and then sets r = 3.
 #
-# (a) Normalization constant c.
-#   Probabilities must sum to 1:  sum_{k>=0} c * r^k / k! = 1.
-#   Exponential series: sum_{k>=0} r^k / k! = e^r.
-#   => c * e^r = 1  =>  c = e^(-r).
-#   For r = 3:  c = e^(-3) ~= 0.049787.
-#   So P(X=k) = e^(-r) r^k / k!, which is the Poisson(r) distribution.
+# Normalization: the probabilities must sum to 1. The Taylor series of the
+# exponential is e^r = sum_{k=0..inf} r^k / k!, so
+#   1 = sum_{k=0..inf} c r^k / k! = c e^r
+# Therefore c = e^-r. For r = 3, c = e^-3 (about 0.0498).
 #
-# (b) Expectation.
-#   E[X] = sum_{k>=0} k * e^(-r) r^k / k!
-#        The k=0 term is 0, and k/k! = 1/(k-1)! for k >= 1:
-#        = e^(-r) * sum_{k>=1} r^k / (k-1)!
-#        Substitute j = k-1 and pull out one factor of r:
-#        = e^(-r) * r * sum_{j>=0} r^j / j!
-#        = e^(-r) * r * e^r = r.
-#   For r = 3:  E[X] = 3.
+# Expectation: the k = 0 term is zero, and k / k! = 1 / (k-1)! for k >= 1.
+#   E[X] = sum_{k=0..inf} k e^-r r^k / k!
+#        = e^-r sum_{k=1..inf} r^k / (k-1)!
+# Shift the index with j = k - 1:
+#        = e^-r r sum_{j=0..inf} r^j / j!
+#        = e^-r r e^r = r
+# For r = 3, E[X] = 3.
 #
-# (b) Variance, using the E[X(X-1)] trick.
-#   E[X(X-1)] = sum_{k>=0} k(k-1) * e^(-r) r^k / k!
-#        The k=0 and k=1 terms are 0, and k(k-1)/k! = 1/(k-2)! for k >= 2:
-#        = e^(-r) * sum_{k>=2} r^k / (k-2)!
-#        Substitute j = k-2 and pull out r^2:
-#        = e^(-r) * r^2 * sum_{j>=0} r^j / j! = e^(-r) * r^2 * e^r = r^2.
-#   E[X^2] = E[X(X-1)] + E[X] = r^2 + r.
-#   Var(X) = E[X^2] - (E[X])^2 = r^2 + r - r^2 = r      (identity proved in Q6).
-#   For r = 3:  Var(X) = 3.
+# Variance: first compute E[X(X-1)]. The k = 0 and k = 1 terms are zero, and
+# k(k-1) / k! = 1 / (k-2)! for k >= 2.
+#   E[X(X-1)] = sum_{k=2..inf} e^-r r^k / (k-2)!
+# Shift the index with j = k - 2:
+#             = e^-r r^2 sum_{j=0..inf} r^j / j!
+#             = e^-r r^2 e^r = r^2
+# Then E[X^2] = E[X(X-1)] + E[X] = r^2 + r, and by Q6
+#   Var(X) = E[X^2] - E[X]^2 = r^2 + r - r^2 = r
+# For r = 3, Var(X) = 3.
+#
+# This is the Poisson distribution with rate 3, and the results agree with its
+# known mean and variance.
 def distribution_moments(rate=3.):
     """Return (c, mean, variance) for P(X=k)=c*rate**k/k!, k>=0, rate>0."""
-    # Step 1: convert to float and check the domain (the series needs rate > 0).
+    # YOUR CODE HERE
     rate = float(rate)
-    if not np.isfinite(rate) or rate <= 0:
-        raise ValueError("rate must be a finite positive number")
-
-    # Step 2: c = e^(-rate) from the exponential series sum rate^k/k! = e^rate.
     c = float(np.exp(-rate))
-
-    # Step 3: Poisson(rate) has mean = rate and variance = rate (derived above).
     mean = rate
     variance = rate
-
     return c, mean, variance
 
 
 # P2 Q2: Show reasoning for intersection, conditional, and union probabilities.
+# YOUR ANSWER HERE
 # Given P(A) = 0.5, P(B) = 0.3, P(A|B) = 0.6.
 #
-# (a) Product rule: P(A|B) = P(A ∩ B) / P(B)  =>  P(A ∩ B) = P(A|B) * P(B).
-#   P(A ∩ B) = 0.6 * 0.3 = 0.18.
+# Intersection: by the definition of conditional probability,
+# P(A|B) = P(A n B) / P(B), so
+#   P(A n B) = P(A|B) P(B) = 0.6 * 0.3 = 0.18
 #
-# (b) Bayes' rule: P(B|A) = P(A ∩ B) / P(A) = P(A|B) P(B) / P(A).
-#   P(B|A) = 0.18 / 0.5 = 0.36.
+# Conditional: by Bayes' rule,
+#   P(B|A) = P(A|B) P(B) / P(A) = 0.18 / 0.5 = 0.36
 #
-# (c) Inclusion-exclusion: P(A ∪ B) = P(A) + P(B) - P(A ∩ B)
-#   (A ∩ B is counted in both P(A) and P(B), so subtract it once).
-#   P(A ∪ B) = 0.5 + 0.3 - 0.18 = 0.62.
-#
-# Sanity checks: 0.18 <= min(0.5, 0.3), and 0.5 <= 0.62 <= 1.
+# Union: by inclusion-exclusion, the intersection is counted twice in
+# P(A) + P(B), so it is subtracted once.
+#   P(A u B) = P(A) + P(B) - P(A n B) = 0.5 + 0.3 - 0.18 = 0.62
 def event_probabilities(p_a=.5, p_b=.3, p_a_given_b=.6):
     """Return (P(A intersect B), P(B|A), P(A union B)).
 
     Inputs describe a valid distribution with p_a,p_b>0.
     """
-    # Step 1: convert to floats and check each input is a valid probability.
-    p_a, p_b, p_a_given_b = float(p_a), float(p_b), float(p_a_given_b)
-    if not (0 < p_a <= 1 and 0 < p_b <= 1):
-        raise ValueError("p_a and p_b must be in (0, 1]")
-    if not 0 <= p_a_given_b <= 1:
-        raise ValueError("p_a_given_b must be in [0, 1]")
-
-    # Step 2: product rule, P(A ∩ B) = P(A|B) * P(B).
-    p_intersection = p_a_given_b * p_b
-
-    # Step 3: check the inputs are consistent with one distribution:
-    # P(A ∩ B) cannot exceed P(A), and P(A ∪ B) cannot exceed 1.
-    tol = 1e-12
-    if p_intersection > p_a + tol or p_a + p_b - p_intersection > 1 + tol:
-        raise ValueError("inputs do not describe a valid probability distribution")
-
-    # Step 4: Bayes' rule, P(B|A) = P(A ∩ B) / P(A)  (p_a > 0, so this is defined).
-    p_b_given_a = p_intersection / p_a
-
-    # Step 5: inclusion-exclusion, P(A ∪ B) = P(A) + P(B) - P(A ∩ B).
-    p_union = p_a + p_b - p_intersection
-
-    return p_intersection, p_b_given_a, p_union
+    # YOUR CODE HERE
+    p_a_and_b = p_a_given_b * p_b
+    p_b_given_a = p_a_and_b / p_a
+    p_a_or_b = p_a + p_b - p_a_and_b
+    return float(p_a_and_b), float(p_b_given_a), float(p_a_or_b)
 
 
 # P2 Q3: Derive MLE/MAP for H,H,T,H,T, including the prior and maximization.
-# Data: H, H, T, H, T  =>  n = 5 tosses, h = 3 heads, n - h = 2 tails.
-# Tosses are independent Bernoulli(theta), theta = P(H).
+# YOUR ANSWER HERE
+# Let theta = P(heads), h = number of heads, n = number of tosses. The data
+# H,H,T,H,T gives h = 3 and n = 5. The tosses are independent, so the
+# likelihood of the observed sequence is
+#   L(theta) = theta^h (1 - theta)^(n-h),   theta in [0, 1]
 #
-# (a) MLE.
-#   Likelihood: L(theta) = prod_i P(x_i | theta) = theta^h * (1-theta)^(n-h)
-#                        = theta^3 * (1-theta)^2.
-#   Log-likelihood (same maximizer, since log is increasing):
-#     l(theta) = h*log(theta) + (n-h)*log(1-theta).
-#   Derivative, set to 0 (for 0 < theta < 1):
-#     dl/dtheta = h/theta - (n-h)/(1-theta) = 0
-#     => h(1-theta) = (n-h)theta  =>  h = n*theta  =>  theta_MLE = h/n.
-#   Second derivative: -h/theta^2 - (n-h)/(1-theta)^2 < 0, so it is a maximum.
-#   theta_MLE = 3/5 = 0.6.
+# MLE, interior case 0 < h < n: take the log.
+#   log L(theta) = h log(theta) + (n - h) log(1 - theta)
+#   d/dtheta log L = h / theta - (n - h) / (1 - theta)
+# Setting the derivative to zero gives h (1 - theta) = (n - h) theta, so
+#   theta_MLE = h / n
+# The second derivative -h / theta^2 - (n - h) / (1 - theta)^2 is negative,
+# so log L is concave and this point is the maximum. L is zero at both
+# endpoints, so no boundary point beats it.
+# For the data, theta_MLE = 3/5 = 0.6.
 #
-#   Boundary cases (the log is undefined at 0 or 1, so check L directly):
-#     h = 0: L(theta) = (1-theta)^n is decreasing on [0,1] => max at theta = 0.
-#     h = n: L(theta) = theta^n is increasing on [0,1]     => max at theta = 1.
-#   Both agree with h/n, so theta_MLE = h/n for every 0 <= h <= n.
+# MLE, boundary cases: the derivative argument does not apply, because one of
+# the log terms is absent and the maximum sits on the boundary.
+#   h = 0: L(theta) = (1 - theta)^n is strictly decreasing on [0, 1], so the
+#          maximum is at theta = 0.
+#   h = n: L(theta) = theta^n is strictly increasing on [0, 1], so the
+#          maximum is at theta = 1.
+# Both equal h / n, so the formula holds for every 0 <= h <= n. n >= 1, so
+# there is no division by zero.
 #
-# (b) MAP with prior P(theta) = 2*theta on [0, 1].
-#   Check the prior is a valid density: integral_0^1 2*theta d(theta) = 1.
-#   Posterior is proportional to likelihood * prior:
-#     p(theta | data) ∝ theta^h (1-theta)^(n-h) * 2*theta ∝ theta^(h+1) (1-theta)^(n-h)
-#   (a Beta(h+2, n-h+1) density). The constant 2 does not change the argmax.
-#   Log-posterior: (h+1)*log(theta) + (n-h)*log(1-theta) + const.
-#   Derivative, set to 0:
-#     (h+1)/theta - (n-h)/(1-theta) = 0
-#     => (h+1)(1-theta) = (n-h)theta  =>  h+1 = (n+1)theta
-#     => theta_MAP = (h+1)/(n+1).
-#   Second derivative: -(h+1)/theta^2 - (n-h)/(1-theta)^2 < 0, so it is a maximum.
-#   theta_MAP = (3+1)/(5+1) = 4/6 = 2/3 ~= 0.6667.
-#   The prior favors larger theta, so the MAP is pulled above the MLE of 0.6.
+# MAP: the prior p(theta) = 2 theta is a valid density on [0, 1] because
+# the integral of 2 theta from 0 to 1 is 1. By Bayes' rule the posterior is
+# proportional to likelihood times prior:
+#   p(theta | data) proportional to theta^h (1 - theta)^(n-h) * 2 theta
+#                   proportional to theta^(h+1) (1 - theta)^(n-h)
+# The prior adds one to the exponent of theta, as if one extra head had been
+# observed.
 #
-#   Boundary cases:
-#     h = n: posterior ∝ theta^(n+1) is increasing on [0,1] => max at theta = 1,
-#            which equals (n+1)/(n+1) = 1.
-#     h = 0: posterior ∝ theta (1-theta)^n is 0 at both ends and positive inside,
-#            so the max is the interior point from the derivative, 1/(n+1).
-#            (It is NOT at theta = 0, because the prior 2*theta is 0 there.)
-#   So theta_MAP = (h+1)/(n+1) for every 0 <= h <= n.
+# MAP, interior case h < n: take the log.
+#   d/dtheta log p = (h + 1) / theta - (n - h) / (1 - theta)
+# Setting the derivative to zero gives (h + 1)(1 - theta) = (n - h) theta, so
+#   theta_MAP = (h + 1) / (n + 1)
+# The log posterior is concave by the same argument as for the MLE, and the
+# posterior is zero at both endpoints, so this point is the maximum. This
+# includes h = 0, where the posterior theta (1 - theta)^n has its mode at
+# 1 / (n + 1) > 0. The prior pulls the estimate off the boundary at 0.
+# For the data, theta_MAP = 4/6 = 2/3.
+#
+# MAP, boundary case h = n: the posterior is theta^(n+1), strictly increasing
+# on [0, 1], so the maximum is at theta = 1. The formula gives
+# (n + 1) / (n + 1) = 1, so it also holds here. n + 1 >= 2, so there is no
+# division by zero.
 def coin_estimates(heads=3, tosses=5):
     """Return (MLE, MAP) using prior density 2*theta on [0,1].
 
     0<=heads<=tosses, positive integer tosses. Include boundary maxima.
     """
-    # Step 1: check the inputs are integer counts with 0 <= heads <= tosses
-    # and tosses >= 1 (bool is rejected because it is not a count).
-    for name, value in (("heads", heads), ("tosses", tosses)):
-        if isinstance(value, bool) or not float(value).is_integer():
-            raise ValueError(f"{name} must be an integer")
-    heads, tosses = int(heads), int(tosses)
-    if tosses < 1 or not 0 <= heads <= tosses:
-        raise ValueError("need tosses >= 1 and 0 <= heads <= tosses")
-
-    # Step 2: MLE. The interior solution is h/n; the boundary cases h = 0 and
-    # h = n (likelihood monotone on [0,1]) give 0 and 1, which h/n also gives.
-    if heads == 0:
+    # YOUR CODE HERE
+    h = int(heads)
+    n = int(tosses)
+    # MLE: boundary maxima at h = 0 and h = n, interior critical point otherwise.
+    if h == 0:
         mle = 0.0
-    elif heads == tosses:
+    elif h == n:
         mle = 1.0
     else:
-        mle = heads / tosses
-
-    # Step 3: MAP. Posterior ∝ theta^(h+1) (1-theta)^(n-h). For h = n it is
-    # increasing, so the max is at the boundary theta = 1; otherwise the
-    # derivative gives the interior maximum (h+1)/(n+1) (this includes h = 0,
-    # where the prior makes the posterior 0 at theta = 0).
-    if heads == tosses:
+        mle = h / n
+    # MAP: posterior proportional to theta^(h+1) (1 - theta)^(n-h).
+    # h = n makes the posterior increasing, so the maximum is at 1.
+    if h == n:
         map_estimate = 1.0
     else:
-        map_estimate = (heads + 1) / (tosses + 1)
-
-    return mle, map_estimate
+        map_estimate = (h + 1) / (n + 1)
+    return float(mle), float(map_estimate)
 
 
 # P2 Q4: Derive both Gaussian MLEs for [1,3,5,7] step by step.
-# Model: x_i ~ N(mu, sigma^2) independently, i = 1..n.
+# YOUR ANSWER HERE
+# Samples x_1, ..., x_n are i.i.d. N(mu, sigma^2). The log-likelihood is the
+# sum of the log densities:
+#   l(mu, sigma^2) = -(n/2) log(2 pi) - (n/2) log(sigma^2)
+#                    - (1 / (2 sigma^2)) sum_i (x_i - mu)^2
 #
-# Step 1: likelihood and log-likelihood.
-#   L(mu, sigma^2) = prod_i (2*pi*sigma^2)^(-1/2) * exp(-(x_i - mu)^2 / (2 sigma^2))
-#   l(mu, sigma^2) = -(n/2) log(2*pi) - (n/2) log(sigma^2)
-#                    - (1/(2 sigma^2)) * sum_i (x_i - mu)^2
+# Partial derivative with respect to mu:
+#   dl/dmu = (1 / sigma^2) sum_i (x_i - mu)
+# Setting it to zero gives sum_i x_i - n mu = 0, so
+#   mu_MLE = (1/n) sum_i x_i
 #
-# Step 2: derivative with respect to mu, set to 0.
-#   dl/dmu = (1/sigma^2) * sum_i (x_i - mu) = 0
-#   => sum_i x_i - n*mu = 0  =>  mu_MLE = (1/n) sum_i x_i  (the sample mean).
+# Partial derivative with respect to sigma^2:
+#   dl/d(sigma^2) = -n / (2 sigma^2) + (1 / (2 sigma^4)) sum_i (x_i - mu)^2
+# Setting it to zero and multiplying by 2 sigma^4 gives
+# -n sigma^2 + sum_i (x_i - mu)^2 = 0. Substituting mu = mu_MLE,
+#   sigma^2_MLE = (1/n) sum_i (x_i - mu_MLE)^2
+# The divisor is n, not n - 1. The MLE is the biased estimator.
 #
-# Step 3: derivative with respect to sigma^2 (treat s = sigma^2 as the variable).
-#   dl/ds = -n/(2s) + (1/(2 s^2)) * sum_i (x_i - mu)^2 = 0
-#   Multiply by 2 s^2:  -n*s + sum_i (x_i - mu)^2 = 0
-#   => sigma^2_MLE = (1/n) sum_i (x_i - mu_MLE)^2   (divisor n, not n-1).
-#   (The n-1 version is the unbiased estimator; the MLE is slightly biased low.)
-#
-# Step 4: plug in X = {1, 3, 5, 7}, n = 4.
-#   mu_MLE = (1 + 3 + 5 + 7) / 4 = 16 / 4 = 4.
-#   Deviations: 1-4 = -3, 3-4 = -1, 5-4 = 1, 7-4 = 3.
-#   Squares: 9, 1, 1, 9  => sum = 20.
-#   sigma^2_MLE = 20 / 4 = 5.
+# For the data [1, 3, 5, 7], n = 4:
+#   mu_MLE = (1 + 3 + 5 + 7) / 4 = 16 / 4 = 4
+#   deviations: 1-4 = -3, 3-4 = -1, 5-4 = 1, 7-4 = 3
+#   squared deviations: 9, 1, 1, 9, with sum 20
+#   sigma^2_MLE = 20 / 4 = 5
+# The unbiased n - 1 version would give 20 / 3, which is not the MLE.
 def gaussian_mle(data=None):
     """Return (mean MLE, variance MLE); default data=[1,3,5,7].
 
     Other inputs are finite 1D samples of length>=2 with nonzero variance.
     """
-    # Step 1: fill in the default dataset from the problem statement.
+    # YOUR CODE HERE
     if data is None:
         data = [1, 3, 5, 7]
-
-    # Step 2: copy into a new float array so the caller's input is never mutated,
-    # and check it is a finite 1D sample with at least 2 points.
+    # Float copy, so the caller's input is never modified.
     x = np.array(data, dtype=float)
-    if x.ndim != 1 or x.size < 2:
-        raise ValueError("data must be a 1D sample with at least 2 values")
-    if not np.all(np.isfinite(x)):
-        raise ValueError("data must be finite")
-
-    # Step 3: mu_MLE = sample mean (from dl/dmu = 0).
-    mean = float(np.mean(x))
-
-    # Step 4: sigma^2_MLE = average squared deviation, divisor n (from dl/ds = 0).
-    variance = float(np.mean((x - mean) ** 2))
-
-    return mean, variance
+    mean = np.mean(x)
+    # ddof=0 gives the 1/n divisor of the MLE.
+    variance = np.var(x, ddof=0)
+    return float(mean), float(variance)
 
 
 # P2 Q5: Derive the Gaussian posterior mode for the given observation/prior.
-# Model: x | mu ~ N(mu, s2) with known s2; prior mu ~ N(m0, t2).
-# Given x = 5, s2 = 4, m0 = 0, t2 = 1.
+# YOUR ANSWER HERE
+# One observation x ~ N(mu, sigma^2) with known variance sigma^2, and prior
+# mu ~ N(mu0, tau^2). Both sigma^2 and tau^2 are variances.
+# Given values: x = 5, sigma^2 = 4, mu0 = 0, tau^2 = 1.
 #
-# Step 1: posterior ∝ likelihood * prior.
-#   p(mu | x) ∝ exp(-(x - mu)^2 / (2 s2)) * exp(-(mu - m0)^2 / (2 t2))
+# By Bayes' rule, p(mu | x) is proportional to p(x | mu) p(mu). Taking logs
+# and dropping terms that do not depend on mu,
+#   log p(mu | x) = -(x - mu)^2 / (2 sigma^2) - (mu - mu0)^2 / (2 tau^2) + const
+# This is a quadratic in mu with negative leading coefficient, so the
+# posterior is Gaussian and its mode is the unique critical point.
 #
-# Step 2: log-posterior (dropping constants that do not depend on mu).
-#   log p(mu | x) = -(x - mu)^2 / (2 s2) - (mu - m0)^2 / (2 t2) + const
+# Derivative with respect to mu:
+#   d/dmu log p(mu | x) = (x - mu) / sigma^2 - (mu - mu0) / tau^2
+# Setting it to zero gives
+#   x / sigma^2 + mu0 / tau^2 = mu (1 / sigma^2 + 1 / tau^2)
+#   mu_MAP = (x / sigma^2 + mu0 / tau^2) / (1 / sigma^2 + 1 / tau^2)
+# This is the average of x and mu0 weighted by their precisions 1 / sigma^2
+# and 1 / tau^2. For a Gaussian the mode equals the mean, so this is also the
+# posterior mean.
 #
-# Step 3: derivative with respect to mu, set to 0.
-#   d/dmu = (x - mu)/s2 - (mu - m0)/t2 = 0
-#   => x/s2 + m0/t2 = mu * (1/s2 + 1/t2)
-#   => mu_MAP = (x/s2 + m0/t2) / (1/s2 + 1/t2).
-#   Second derivative: -(1/s2 + 1/t2) < 0, so this is a maximum.
-#   Equivalently, completing the square shows the posterior is Gaussian with
-#   precision 1/s2 + 1/t2, and its mode equals its mean, the formula above.
-#   Interpretation: a precision-weighted average of the observation x
-#   (weight 1/s2) and the prior mean m0 (weight 1/t2).
-#
-# Step 4: plug in x = 5, s2 = 4, m0 = 0, t2 = 1.
-#   mu_MAP = (5/4 + 0/1) / (1/4 + 1/1) = 1.25 / 1.25 = 1.
-#   The prior (precision 1) is 4x more confident than the observation
-#   (precision 1/4), so the estimate is pulled strongly from 5 toward 0.
+# For the given values:
+#   mu_MAP = (5/4 + 0/1) / (1/4 + 1/1) = 1.25 / 1.25 = 1
+# The prior has precision 1 and the observation has precision 1/4, so the
+# estimate is pulled strongly from x = 5 toward the prior mean 0.
 def gaussian_map(x=5., observation_variance=4., prior_mean=0., prior_variance=1.):
     """Return posterior mode for one observation and a Gaussian mean prior.
 
     Both variances are positive; inputs are variances, not standard deviations.
     """
-    # Step 1: convert to floats and check both variances are positive.
-    x, prior_mean = float(x), float(prior_mean)
-    observation_variance = float(observation_variance)
-    prior_variance = float(prior_variance)
-    if observation_variance <= 0 or prior_variance <= 0:
-        raise ValueError("variances must be positive")
-
-    # Step 2: precisions (inverse variances) are the weights in the formula.
-    obs_precision = 1.0 / observation_variance
+    # YOUR CODE HERE
+    observation_precision = 1.0 / observation_variance
     prior_precision = 1.0 / prior_variance
-
-    # Step 3: precision-weighted average from setting d/dmu log-posterior = 0.
-    return (obs_precision * x + prior_precision * prior_mean) / (obs_precision + prior_precision)
+    numerator = x * observation_precision + prior_mean * prior_precision
+    return float(numerator / (observation_precision + prior_precision))
 
 
 # P2 Q6: Prove Var(X)=E[X**2]-E[X]**2.
-# Let mu = E[X] (a constant). By definition Var(X) = E[(X - mu)^2].
-#
-# Step 1: expand the square.
-#   (X - mu)^2 = X^2 - 2*mu*X + mu^2
-#
-# Step 2: apply linearity of expectation, E[aU + bV + c] = aE[U] + bE[V] + c.
-#   E[(X - mu)^2] = E[X^2] - 2*mu*E[X] + mu^2
-#
-# Step 3: substitute E[X] = mu.
-#   = E[X^2] - 2*mu^2 + mu^2
-#   = E[X^2] - mu^2
-#
-# Therefore Var(X) = E[X^2] - (E[X])^2.   QED
-# (Used in Q1: Var(X) = (r^2 + r) - r^2 = r.)
+# YOUR ANSWER HERE
+# Let mu = E[X], a constant. By definition Var(X) = E[(X - mu)^2].
+# Expand the square:
+#   (X - mu)^2 = X^2 - 2 mu X + mu^2
+# By linearity of expectation, and because mu is a constant,
+#   E[(X - mu)^2] = E[X^2] - 2 mu E[X] + mu^2
+#                 = E[X^2] - 2 mu^2 + mu^2
+#                 = E[X^2] - mu^2
+# Therefore Var(X) = E[X^2] - E[X]^2.
 
 # PART 3 (30 points), Q1: Define covariance and derive Var(u.T@X)=u.T@Sigma@u.
-# Let X be a random vector in R^d and u a fixed (non-random) unit vector, ||u|| = 1.
+# YOUR ANSWER HERE
+# Let X be a random vector in R^d with mean mu = E[X]. The covariance matrix
+# is defined as
+#   Sigma = E[(X - mu)(X - mu)^T]
+# It is d x d, and its (i, j) entry is Cov(X_i, X_j) = E[(X_i - mu_i)(X_j - mu_j)].
+# Sigma is symmetric because (X - mu)(X - mu)^T is symmetric.
 #
-# Definitions:
-#   Mean:        mu    = E[X]                      (a d-vector)
-#   Covariance:  Sigma = E[(X - mu)(X - mu)^T]     (a d x d matrix)
-#     Entry-wise Sigma_ij = Cov(X_i, X_j); Sigma is symmetric (Sigma_ij = Sigma_ji)
-#     and positive semi-definite (shown at the end of Step 5).
+# Let u be a fixed vector in R^d. The projection u^T X is a scalar random
+# variable.
 #
-# Step 1: the projection u^T X is a scalar random variable, and its mean is
-#   E[u^T X] = u^T E[X] = u^T mu        (linearity of expectation; u is constant).
+# Step 1, its mean: by linearity of expectation, E[u^T X] = u^T E[X] = u^T mu.
 #
-# Step 2: definition of variance for a scalar, Var(Y) = E[(Y - E[Y])^2]:
+# Step 2, definition of variance:
 #   Var(u^T X) = E[(u^T X - u^T mu)^2] = E[(u^T (X - mu))^2]
-#   (factor out u^T, since matrix multiplication distributes over subtraction).
 #
-# Step 3: u^T (X - mu) is a scalar, and a scalar equals its own transpose, so
-#   u^T (X - mu) = (X - mu)^T u. Write the square as the product of the two forms:
-#   (u^T (X - mu))^2 = u^T (X - mu) (X - mu)^T u.
-#   => Var(u^T X) = E[u^T (X - mu)(X - mu)^T u]
+# Step 3, rewrite the square: u^T (X - mu) is a scalar, so it equals its own
+# transpose (X - mu)^T u. Hence
+#   (u^T (X - mu))^2 = u^T (X - mu) (X - mu)^T u
 #
-# Step 4: u is constant, so linearity lets it move outside the expectation
-#   (E[A Z B] = A E[Z] B for constant matrices A, B):
-#   Var(u^T X) = u^T E[(X - mu)(X - mu)^T] u
+# Step 4, pull out the constants: u is not random, so by linearity of
+# expectation
+#   E[u^T (X - mu)(X - mu)^T u] = u^T E[(X - mu)(X - mu)^T] u = u^T Sigma u
 #
-# Step 5: the middle term is exactly the definition of Sigma:
-#   Var(u^T X) = u^T Sigma u.   QED
-#   Since a variance is >= 0, u^T Sigma u >= 0 for every u, so Sigma is PSD
-#   and all of its eigenvalues are >= 0.
-#
-# Why the top eigenvector maximizes the projected variance (Lagrange multipliers):
-#   Maximize u^T Sigma u subject to u^T u = 1.
-#   Lagrangian: J(u, lambda) = u^T Sigma u - lambda (u^T u - 1).
-#   Gradient: dJ/du = 2 Sigma u - 2 lambda u = 0  =>  Sigma u = lambda u.
-#   So every stationary point is an eigenvector of Sigma, and at such a point
-#   u^T Sigma u = u^T (lambda u) = lambda (u^T u) = lambda.
-#   The projected variance therefore equals the eigenvalue, and it is largest for
-#   the eigenvector with the largest eigenvalue: this is the first principal
-#   component. Repeating with the extra constraint u perpendicular to the
-#   earlier components gives the next eigenvectors in order of decreasing
-#   eigenvalue.
+# Therefore Var(u^T X) = u^T Sigma u.
+# A variance is never negative, so u^T Sigma u >= 0 for every u. This means
+# Sigma is positive semidefinite, and all its eigenvalues are >= 0.
 
 # P3 Q2: Describe the Gaussian generator and observed correlation.
-# Generator: X ~ N(mean, covariance) in 2D, with default
-#   mean = [2, -1],  covariance = [[3, 1.2], [1.2, 1]].
-#   The covariance is positive definite: det = 3*1 - 1.2^2 = 1.56 > 0 and 3 > 0.
-#   np.random.default_rng(seed).multivariate_normal factorizes the covariance
-#   (Sigma = L L^T) and returns mean + L z with z ~ N(0, I). This gives
-#   samples whose covariance is Sigma. The same seed always gives the same samples.
+# YOUR ANSWER HERE
+# generate_data draws n_samples i.i.d. points from the bivariate Gaussian
+# N(mean, covariance) using np.random.default_rng(seed).multivariate_normal.
+# A fixed seed gives the same samples on every call, so results are
+# reproducible. The defaults are mean = [2, -1] and
+# covariance = [[3, 1.2], [1.2, 1]].
 #
-# Correlation structure:
-#   Theoretical correlation = Cov(X1, X2) / sqrt(Var(X1) Var(X2))
-#                           = 1.2 / sqrt(3 * 1) ~= 0.693 (strong positive).
-#   With n_samples = 500, seed = 0, the sample statistics are:
-#     sample mean ~= [2.152, -0.935]          (true [2, -1])
-#     sample covariance ~= [[2.916, 1.166],   (true [[3, 1.2],
-#                           [1.166, 0.953]]          [1.2, 1]])
-#     sample correlation ~= 0.699             (true 0.693)
-#   The scatter plot is a tilted ellipse: when feature 1 is above its mean,
-#   feature 2 tends to be above its mean too. The ellipse is wider along
-#   feature 1 (variance 3) than feature 2 (variance 1), so its long axis is
-#   tilted only about 25 degrees above the feature-1 axis, not 45 degrees.
-#   The small differences from the true values are sampling noise, which
-#   shrinks like 1/sqrt(n).
+# The true correlation between the two coordinates is
+#   rho = Cov(X_1, X_2) / sqrt(Var(X_1) Var(X_2)) = 1.2 / sqrt(3 * 1) = 1.2 / sqrt(3)
+#       = about 0.69
+# This is a clear positive correlation. When X_1 is above its mean, X_2 tends
+# to be above its mean too, so the scatter plot forms an ellipse tilted
+# upward. X_1 has variance 3 and X_2 has variance 1, so the cloud is also
+# wider along the horizontal axis than the vertical one.
+#
+# With the defaults (500 samples, seed 0), the sample mean is about
+# [2.15, -0.93] and the sample correlation is about 0.70. Both are close to
+# the true values, as expected for 500 samples.
 def generate_data(n_samples=500, seed=0, mean=None, covariance=None):
     """Return reproducible Gaussian samples (n_samples,2) using NumPy and seed.
 
     Defaults: mean=[2,-1], covariance=[[3,1.2],[1.2,1]]. Custom mean has shape
     (2,), covariance (2,2) is positive definite. Do not mutate input arrays.
     """
-    # Step 1: fill in the defaults from the assignment.
+    # YOUR CODE HERE
     if mean is None:
         mean = [2., -1.]
     if covariance is None:
         covariance = [[3., 1.2], [1.2, 1.]]
-
-    # Step 2: copy into new float arrays so the caller's inputs are never mutated.
+    # Float copies, so the caller's inputs are never modified.
     mean = np.array(mean, dtype=float)
     covariance = np.array(covariance, dtype=float)
-
-    # Step 3: check the inputs: integer sample count >= 1, mean shape (2,),
-    # covariance shape (2, 2), symmetric and positive definite (Cholesky
-    # succeeds only for positive definite matrices).
-    if isinstance(n_samples, bool) or not float(n_samples).is_integer() or n_samples < 1:
-        raise ValueError("n_samples must be a positive integer")
-    if mean.shape != (2,):
-        raise ValueError("mean must have shape (2,)")
-    if covariance.shape != (2, 2) or not np.allclose(covariance, covariance.T):
-        raise ValueError("covariance must be a symmetric (2, 2) matrix")
-    try:
-        np.linalg.cholesky(covariance)
-    except np.linalg.LinAlgError:
-        raise ValueError("covariance must be positive definite") from None
-
-    # Step 4: draw reproducible samples from a generator seeded with `seed`.
     rng = np.random.default_rng(seed)
     return rng.multivariate_normal(mean, covariance, size=int(n_samples))
 
 
 # P3 Q3: Link centering/covariance/eigendecomposition to the derivation and explain the plot.
-# Each step of pca() below follows the Q1 derivation:
-#   1. Centering: subtract the sample mean, X_c = X - mean. This estimates the
-#      (X - mu) term in Sigma = E[(X - mu)(X - mu)^T].
-#   2. Covariance: Sigma_hat = X_c^T X_c / (n - 1). This is the sample version of
-#      E[(X - mu)(X - mu)^T]. The n - 1 divisor makes it unbiased, because one degree
-#      of freedom is spent estimating the mean.
-#   3. Eigendecomposition: Q1 showed the directions maximizing u^T Sigma u with
-#      ||u|| = 1 are the solutions of Sigma u = lambda u. Sigma_hat is symmetric,
-#      so np.linalg.eigh gives real eigenvalues and orthonormal eigenvectors.
-#   4. Selection: the eigenvalue equals the variance of the data projected on
-#      that eigenvector (u^T Sigma u = lambda), so sorting eigenvalues in
-#      descending order ranks the components from most to least variance.
-#   5. Scores: scores = X_c @ components gives each sample's coordinates u_k^T x_c
-#      along each component. The sample variance of score column k equals
-#      lambda_k, and the score columns are uncorrelated.
+# YOUR ANSWER HERE
+# PCA looks for the unit direction u along which the projected data u^T X has
+# the largest variance. By Q1, that variance is u^T Sigma u, so the first
+# principal component is
+#   u_1 = argmax_u u^T Sigma u   subject to   ||u|| = 1
+# Without the constraint the objective could be made arbitrarily large by
+# scaling u, so the constraint ||u||^2 = u^T u = 1 is needed.
 #
-# Results for the default data (n = 500, seed = 0):
-#   eigenvalues ~= [3.458, 0.411]   (true [3.562, 0.438])
-#   PC1 ~= +/-[0.907, 0.422] (about 25 degrees above the feature-1 axis),
-#   PC2 ~= +/-[-0.422, 0.907] (perpendicular to PC1).
-# On the plot, both directions are drawn from the sample mean. PC1 follows the
-# long axis of the elliptical cloud, and PC2 follows its short axis.
+# Lagrangian: L(u, lambda) = u^T Sigma u - lambda (u^T u - 1).
+# Sigma is symmetric, so the gradient with respect to u is 2 Sigma u - 2 lambda u.
+# Setting it to zero gives
+#   Sigma u = lambda u
+# So every critical point is an eigenvector of Sigma. At such a point the
+# objective equals u^T Sigma u = lambda u^T u = lambda. The maximum is
+# therefore the largest eigenvalue, reached at its eigenvector. The second
+# component maximizes the same objective among unit vectors orthogonal to
+# u_1, which gives the eigenvector of the second largest eigenvalue. Each
+# eigenvalue is the variance of the data along its component.
 #
-# Special cases handled:
-#   - Rank-deficient data (e.g. all points on a line) gives a zero eigenvalue.
-#     Round-off can make it slightly negative, so it is clipped to 0 because a
-#     covariance matrix is PSD (Q1).
-#   - Tied eigenvalues (e.g. an isotropic cloud) have no unique direction. Any
-#     orthonormal basis of the tied eigenspace is valid, and eigh returns one.
+# How each step in pca() maps to this derivation:
+#   (i) Centering: subtracting the sample mean replaces X with X - mu, the
+#       quantity inside Sigma = E[(X - mu)(X - mu)^T].
+#   (ii) Covariance: Sigma is estimated by centered^T centered / (n - 1). This
+#        is the sample version of the expectation, with the unbiased n - 1
+#        divisor.
+#   (iii) Eigendecomposition: np.linalg.eigh solves Sigma u = lambda u, the
+#         Lagrangian condition above. Sigma is symmetric, so eigh returns real
+#         eigenvalues and orthonormal eigenvectors. This holds even when two
+#         eigenvalues are tied (any orthonormal basis of the shared eigenspace
+#         is returned) or when Sigma is rank-deficient (an eigenvalue is 0).
+#   (iv) Ordering: eigh returns eigenvalues in ascending order. They are
+#        reversed so that the first component has the largest variance.
+#   (v) Clipping: by Q1 the eigenvalues are >= 0. Floating-point error can
+#       produce tiny negative values in the rank-deficient case, so these are
+#       clipped to 0.
+#   (vi) Scores: centered @ components gives u_j^T (x_i - mu) for each point i
+#        and component j, the coordinates of the data in the new basis. The
+#        sample variance of column j of the scores equals eigenvalue j.
+#
+# For the default data, the eigenvalues are about 3.46 and 0.41. The first
+# component points at about 25 degrees above the horizontal axis (up to
+# sign), along the long axis of the tilted ellipse. The true covariance gives
+# eigenvalues 3.56 and 0.44 and the same angle, so the sample estimate is
+# close. In the scatter plot, the first component arrow runs along the
+# direction of greatest spread, and the second is perpendicular to it along
+# the short axis of the ellipse. Arrow lengths are scaled by the standard
+# deviation sqrt(eigenvalue) along each component.
 def pca(X):
     """Fit NumPy PCA without mutating finite X of shape (n,2), n>=2.
 
@@ -624,49 +492,24 @@ def pca(X):
     Signs/tied-eigenspace bases are free. Include rank-deficient and tied cases.
     NumPy eigh/SVD are allowed; fitted library PCA is not.
     """
-    # Step 0: copy into a new float array (so X is never mutated) and check the
-    # input is a finite 2D array with at least 2 samples (n - 1 > 0).
+    # YOUR CODE HERE
+    # Float copy, so the caller's input is never modified.
     X = np.array(X, dtype=float)
-    if X.ndim != 2 or X.shape[0] < 2:
-        raise ValueError("X must be a 2D array with at least 2 rows")
-    if not np.all(np.isfinite(X)):
-        raise ValueError("X must be finite")
     n = X.shape[0]
-
-    # Step 1 (Q1: X - mu): estimate mu with the sample mean and center the data.
+    # (i) Centering.
     mean = X.mean(axis=0)
     centered = X - mean
-
-    # Step 2 (Q1: Sigma = E[(X - mu)(X - mu)^T]): sample covariance, divisor n - 1.
+    # (ii) Sample covariance with divisor n - 1.
     covariance = centered.T @ centered / (n - 1)
-    # Enforce exact symmetry (round-off can break it slightly) before eigh.
-    covariance = (covariance + covariance.T) / 2
-
-    # Step 3 (Q1: Lagrange condition Sigma u = lambda u): eigendecomposition of the
-    # symmetric covariance. eigh returns ascending eigenvalues and orthonormal
-    # eigenvector columns, including an orthonormal basis for tied eigenvalues.
+    # (iii) Eigendecomposition of the symmetric covariance.
     eigenvalues, eigenvectors = np.linalg.eigh(covariance)
-
-    # Step 4 (Q1: projected variance = lambda): sort descending so component 1
-    # carries the most variance, and reorder the columns to keep the pairs.
-    order = np.argsort(eigenvalues)[::-1]
-    eigenvalues = eigenvalues[order]
-    components = eigenvectors[:, order]
-
-    # Covariance is PSD, so any negative eigenvalue is round-off; clip it to 0.
+    # (iv) eigh is ascending, so reverse to descending.
+    eigenvalues = eigenvalues[::-1]
+    components = eigenvectors[:, ::-1]
+    # (v) Remove tiny negative values caused by floating-point error.
     eigenvalues = np.clip(eigenvalues, 0.0, None)
-
-    # Optional sign convention (signs are free): make the largest-magnitude
-    # entry of each component positive, so results do not depend on eigh's
-    # arbitrary sign choice. Flipping a column keeps it a unit eigenvector.
-    largest = np.argmax(np.abs(components), axis=0)
-    signs = np.sign(components[largest, np.arange(components.shape[1])])
-    signs[signs == 0] = 1.0
-    components = components * signs
-
-    # Step 5: project the centered data onto the components, score_k = u_k^T x_c.
+    # (vi) Project the centered data onto the components.
     scores = centered @ components
-
     return {
         'mean': mean,
         'centered': centered,
@@ -678,234 +521,172 @@ def pca(X):
 
 
 # P3 Q4: Interpret the variance fractions and dimensionality reduction tradeoff.
-# Total variance = trace(Sigma) = sum of eigenvalues (the trace is invariant
-# under the orthogonal change of basis to the eigenvectors). So component k
-# explains the fraction  lambda_k / sum_j lambda_j  of the total variance.
+# YOUR ANSWER HERE
+# The fraction of variance explained by component j is
+#   lambda_j / (lambda_1 + ... + lambda_d)
+# Each eigenvalue is the variance along its component (Q3), and the
+# eigenvalues sum to trace(Sigma), the total variance of the data. So the
+# fractions are nonnegative and sum to 1.
 #
-# Default data (n = 500, seed = 0):
-#   fractions ~= [0.894, 0.106]   (theoretical [0.891, 0.109], from
-#   eigenvalues 2 +/- sqrt(2.44) ~= 3.562, 0.438 of the true covariance).
-#   PC1 alone keeps about 89% of the variance, and PC2 holds only about 11%.
+# For the true covariance [[3, 1.2], [1.2, 1]], the eigenvalues are
+# 2 +/- sqrt(2.44), about 3.56 and 0.44, so PC1 explains about 89.1% of the
+# variance and PC2 about 10.9%. For the default sample (500 points, seed 0),
+# the fractions are about 89.4% and 10.6%.
 #
-# Dimensionality reduction:
-#   Keeping only PC1 (projecting 2D -> 1D) keeps ~89% of the variance and
-#   stores 1 number per sample instead of 2. The discarded variance
-#   lambda_2 ~= 0.411 (~11% of the total) equals the squared reconstruction
-#   error summed over samples divided by n - 1, i.e. what is lost along PC2.
-#   PCA's choice is optimal: no other 1D linear projection keeps more
-#   variance (Q1), so none has a smaller reconstruction error.
-#
-# Tradeoff:
-#   Fewer components mean more compression, less noise and faster downstream
-#   models, but more information lost. More components mean higher fidelity
-#   but less reduction. A common rule is to keep the smallest k whose
-#   cumulative explained variance reaches a threshold (e.g. 90-95%). Here 1
-#   component gives ~89%, just under 90%, and 2 give 100% but no reduction.
-#   The gain is small in 2D but grows in high dimensions, where a few
-#   components often explain most of the variance. The limitation is that PCA
-#   only captures linear structure and depends on feature scale (standardize
-#   features first when their units differ).
+# Projecting each point onto PC1 alone reduces the data from 2D to 1D and
+# keeps about 89% of the variance. The tradeoff:
+#   (i) Benefits: the data is stored with half as many numbers (compression),
+#       and later computations run on a smaller representation. If the small
+#       variance along PC2 is mostly noise, discarding it also denoises the
+#       data.
+#   (ii) Cost: the roughly 11% of variance along PC2 is lost. Points that
+#        differ only along PC2 become identical after projection, and the
+#        reconstruction error is exactly the discarded variance. If that
+#        direction carries real signal, for example the feature that separates
+#        two classes, the 1D projection removes it.
+# PCA keeps the directions of largest variance, which is not always the same
+# as the directions most useful for a given task.
 def explained_variance(eigenvalues):
     """Return same-shape fractions for nonnegative eigenvalues with positive sum."""
-    # Step 1: copy into a new float array so the caller's input is never mutated.
+    # YOUR CODE HERE
+    # Float copy, so the caller's input is never modified.
     eigenvalues = np.array(eigenvalues, dtype=float)
+    return eigenvalues / eigenvalues.sum()
 
-    # Step 2: check the docstring's preconditions: finite, nonnegative, sum > 0.
-    if not np.all(np.isfinite(eigenvalues)) or np.any(eigenvalues < 0):
-        raise ValueError("eigenvalues must be finite and nonnegative")
-    total = eigenvalues.sum()
-    if total <= 0:
-        raise ValueError("eigenvalues must have a positive sum")
-
-    # Step 3: fraction of total variance, lambda_k / sum_j lambda_j (same shape).
-    return eigenvalues / total
 
 # P3 Q2/Q3/Q4: Provide labeled figures and discuss their meaning.
-# Figures saved by the main block (default data, n = 500, seed = 0):
+# YOUR ANSWER HERE
+# make_plots returns one figure with two panels.
 #
-# data_scatter.png (Q2): a plain scatter of the samples. The cloud is an
-#   ellipse tilted upward to the right: x1 and x2 rise together, with sample
-#   correlation r = 0.699 (theory 1.2/sqrt(3) ~= 0.693). The cloud is wider
-#   along x1 (variance ~2.92) than along x2 (variance ~0.95).
+# Left panel (Q2 and Q3): a scatter plot of the samples with the two
+# principal directions drawn as arrows from the sample mean. Each arrow has
+# length sqrt(eigenvalue), the standard deviation of the data along that
+# component. The cloud is an ellipse tilted upward, which shows the positive
+# correlation from Q2. The PC1 arrow runs along the long axis of the ellipse,
+# about 25 degrees above horizontal, and is about 1.86 long. The PC2 arrow is
+# perpendicular to it along the short axis and is about 0.64 long. The axes
+# use equal scaling, so the arrows appear perpendicular as they are.
 #
-# pca_plots.png, left panel (Q3): the same samples, their mean (black X at
-#   about (2.15, -0.93)), and both principal directions drawn from the mean
-#   with length 2*sqrt(lambda_k), i.e. two standard deviations along that
-#   component. PC1 (orange, length 3.72) points along the long axis of the
-#   ellipse, about 25 degrees above the x1 axis. PC2 (aqua, length 1.28) is
-#   perpendicular to it along the short axis. The axes use an equal aspect
-#   ratio, so the right angle between the components is shown faithfully.
-#   This matches Q1: the direction u maximizing u^T Sigma u is the top
-#   eigenvector, and the spread of the data along each arrow is
-#   sqrt(u^T Sigma u) = sqrt(lambda).
-#
-# pca_plots.png, right panel (Q4): the explained variance fractions,
-#   PC1 = 89.4% and PC2 = 10.6%. Almost all of the variation lies along one
-#   direction, so projecting the 2D data onto PC1 alone keeps most of the
-#   information (see the Q4 discussion above for the tradeoff).
-# Colors: data points use one hue (blue); PC1 (orange) and PC2 (aqua) keep the
-# same color in both panels, so each component reads as one entity. Every arrow
-# and bar also has a text label, so identity never depends on color alone.
-_DATA_COLOR = '#2a78d6'
-_PC_COLORS = ('#eb6834', '#1baf7a', '#6250d6', '#e87ba4')
-_INK = '#0b0b0b'
-_INK_MUTED = '#52514e'
-_GRID = '#e4e3df'
-
-
-def _style_axes(ax):
-    """Recessive grid and spines so the data marks stand out (helper)."""
-    ax.grid(True, color=_GRID, linewidth=0.8)
-    ax.set_axisbelow(True)
-    for side in ('top', 'right'):
-        ax.spines[side].set_visible(False)
-    for side in ('left', 'bottom'):
-        ax.spines[side].set_color(_INK_MUTED)
-    ax.tick_params(colors=_INK_MUTED)
-
-
-def make_scatter(X):
-    """Return a Figure with a plain labeled scatter of 2D data X (for P3 Q2)."""
-    # Step 1: copy X so the caller's array is never mutated.
-    X = np.array(X, dtype=float)
-
-    # Step 2: build the figure without pyplot, so importing this module or
-    # calling this function never needs a display (saving is done in main).
-    fig = Figure(figsize=(6, 5), layout='constrained')
-    ax = fig.add_subplot()
-    _style_axes(ax)
-    ax.scatter(X[:, 0], X[:, 1], s=14, alpha=0.5, color=_DATA_COLOR,
-               edgecolors='none', label=f'samples (n = {len(X)})')
-    r = np.corrcoef(X, rowvar=False)[0, 1]
-    ax.set_title(f'Synthetic correlated Gaussian data (sample r = {r:.3f})', color=_INK)
-    ax.set_xlabel('Feature 1 ($x_1$)', color=_INK)
-    ax.set_ylabel('Feature 2 ($x_2$)', color=_INK)
-    ax.set_aspect('equal', adjustable='datalim')
-    ax.legend(loc='upper left', frameon=False)
-    return fig
-
-
+# Right panel (Q4): a bar chart of the explained variance fraction of each
+# component, with the value printed on each bar. PC1 accounts for about 89%
+# and PC2 for about 11%, which shows that a 1D projection onto PC1 keeps most
+# of the variance.
 def make_plots(X, result):
     """Return a Matplotlib Figure (or sequence of Figures), without show/save.
 
     Plot samples and principal directions through their mean, and explained
     variance fractions. Label axes. Plot quality is manually reviewed.
     """
-    # Step 1: copy the inputs so neither X nor the pca() result is mutated.
+    # YOUR CODE HERE
+    import matplotlib.pyplot as plt
+
     X = np.array(X, dtype=float)
     mean = np.array(result['mean'], dtype=float)
     eigenvalues = np.array(result['eigenvalues'], dtype=float)
     components = np.array(result['components'], dtype=float)
     fractions = explained_variance(eigenvalues)
-    names = [f'PC{k + 1}' for k in range(len(eigenvalues))]
-    colors = [_PC_COLORS[k % len(_PC_COLORS)] for k in range(len(eigenvalues))]
 
-    # Step 2: create a two-panel figure without pyplot (no show/save here).
-    fig = Figure(figsize=(12, 5), layout='constrained')
-    ax_data, ax_var = fig.subplots(1, 2, width_ratios=[1.3, 1])
+    fig, (ax_scatter, ax_bar) = plt.subplots(1, 2, figsize=(12, 5))
 
-    # Step 3 (left panel): samples, their mean, and each principal direction
-    # drawn from the mean with length 2*sqrt(lambda_k), i.e. two standard
-    # deviations of the data projected on that component (Q1: Var = lambda).
-    _style_axes(ax_data)
-    ax_data.scatter(X[:, 0], X[:, 1], s=14, alpha=0.35, color=_DATA_COLOR,
-                    edgecolors='none', label=f'samples (n = {len(X)})')
-    handles = [ax_data.collections[0]]
-    tips = []
-    for k in range(len(eigenvalues)):
-        direction = components[:, k] * 2 * np.sqrt(eigenvalues[k])
-        tip = mean + direction
-        tips.append(tip)
-        ax_data.annotate('', xy=tip, xytext=mean,
-                         arrowprops=dict(arrowstyle='-|>', color=colors[k],
-                                         lw=2.5, mutation_scale=18,
-                                         shrinkA=0, shrinkB=0))
-        # Label just beyond the arrow tip, pushed outward along the direction.
-        norm = np.linalg.norm(direction)
-        offset = direction / norm * 0.35 if norm > 0 else np.zeros(2)
-        ax_data.text(*(tip + offset), names[k], color=_INK, fontsize=11,
-                     fontweight='bold', ha='center', va='center')
-        handles.append(Line2D([], [], color=colors[k], lw=2.5,
-                              label=f'{names[k]}: 2$\\sqrt{{\\lambda_{k + 1}}}$ = '
-                                    f'{2 * np.sqrt(eigenvalues[k]):.2f}'))
-    handles.append(ax_data.scatter(*mean, s=120, marker='X', color=_INK,
-                                   edgecolors='white', linewidths=1.5, zorder=3,
-                                   label=f'mean ({mean[0]:.2f}, {mean[1]:.2f})'))
-    # annotate() does not autoscale, so include the arrow tips in the limits.
-    ax_data.update_datalim(np.vstack(tips + [mean]))
-    ax_data.autoscale_view()
-    ax_data.set_aspect('equal', adjustable='datalim')
-    ax_data.set_title('Data with principal directions from the mean', color=_INK)
-    ax_data.set_xlabel('Feature 1 ($x_1$)', color=_INK)
-    ax_data.set_ylabel('Feature 2 ($x_2$)', color=_INK)
-    ax_data.legend(handles=handles, loc='upper left', frameon=True,
-                   framealpha=0.9, edgecolor=_GRID)
+    # Left: samples and principal directions from the mean.
+    ax_scatter.scatter(X[:, 0], X[:, 1], s=10, alpha=0.4, color='tab:gray',
+                       label='Samples')
+    ax_scatter.scatter(mean[0], mean[1], s=60, color='black', marker='x',
+                       zorder=3, label='Sample mean')
+    colors = ['tab:red', 'tab:blue']
+    for j in range(components.shape[1]):
+        # Eigenvector signs are arbitrary. For readability, flip each one so
+        # its largest-magnitude entry is positive. This changes only the
+        # drawing, not the result.
+        u = components[:, j]
+        if u[np.argmax(np.abs(u))] < 0:
+            u = -u
+        direction = u * np.sqrt(eigenvalues[j])
+        ax_scatter.quiver(mean[0], mean[1], direction[0], direction[1],
+                          angles='xy', scale_units='xy', scale=1,
+                          color=colors[j % len(colors)], width=0.008, zorder=4,
+                          label=f'PC{j + 1} (length sqrt(eigenvalue) = '
+                                f'{np.sqrt(eigenvalues[j]):.2f})')
+    ax_scatter.set_aspect('equal', adjustable='datalim')
+    ax_scatter.set_xlabel('$x_1$')
+    ax_scatter.set_ylabel('$x_2$')
+    ax_scatter.set_title('Samples and principal directions')
+    ax_scatter.legend(loc='lower right', fontsize=9)
 
-    # Step 4 (right panel): explained variance fraction of each component,
-    # with the percentage written above each bar.
-    _style_axes(ax_var)
-    ax_var.grid(False, axis='x')
-    positions = np.arange(len(fractions))
-    bars = ax_var.bar(positions, fractions, width=0.6, color=colors,
-                      edgecolor='white', linewidth=2)
+    # Right: explained variance fractions.
+    labels = [f'PC{j + 1}' for j in range(len(fractions))]
+    bars = ax_bar.bar(labels, fractions, color=colors[:len(fractions)],
+                      label='Fraction of total variance')
     for bar, fraction in zip(bars, fractions):
-        ax_var.text(bar.get_x() + bar.get_width() / 2, fraction + 0.02,
-                    f'{100 * fraction:.1f}%', ha='center', va='bottom',
-                    color=_INK, fontsize=12, fontweight='bold')
-    ax_var.set_xticks(positions, names)
-    ax_var.set_ylim(0, 1.1)
-    ax_var.set_title('Explained variance by principal component', color=_INK)
-    ax_var.set_xlabel('Principal component', color=_INK)
-    ax_var.set_ylabel('Fraction of total variance', color=_INK)
+        ax_bar.text(bar.get_x() + bar.get_width() / 2, fraction + 0.01,
+                    f'{fraction:.1%}', ha='center', va='bottom')
+    ax_bar.set_ylim(0, 1.05)
+    ax_bar.set_xlabel('Principal component')
+    ax_bar.set_ylabel('Explained variance fraction')
+    ax_bar.set_title('Explained variance by component')
+    ax_bar.legend(loc='upper right')
 
+    fig.tight_layout()
     return fig
 
 
 # REFLECTION: contributions, tasks completed, and external resources used.
-# - Contributions: I worked on this assignment individually.
-# - Tasks completed: all parts - Part 1 (linear algebra), Part 2 (probability,
-#   MLE, MAP) and Part 3 (PCA derivation, NumPy implementation and plots).
-# - Resources: I used an AI assistant to help draft the derivations, code and
-#   tests; the full conversation log is submitted to Canvas per the course AI
-#   policy. I also used the NumPy and Matplotlib documentation.
-# - Verification: I checked the results with a test script
-#   (test_assignment1.py) and against the hand-computed values in the
-#   derivations.
+# YOUR ANSWER HERE
+# Name: Ioannis Barous
+#
+# Tasks completed: all parts. Part 1 (matrix operations, eigensystem, trace
+# proof, matrix inverse), Part 2 (normalizing the distribution and its
+# moments, event probabilities, coin MLE and MAP, Gaussian MLE and MAP,
+# variance identity) and Part 3 (covariance projection derivation, data
+# generation, PCA, explained variance, plots).
+#
+# Contributions: I worked on this assignment individually.
+#
+# External resources: I used Claude (Anthropic's AI assistant) to help draft
+# the written derivations and the code. I specified the approach for each
+# question, checked the derivations, and tested every function on the
+# default inputs and on other inputs, including boundary, tied and
+# rank-deficient cases. I also used the NumPy and Matplotlib documentation.
 
 if __name__ == '__main__':
+    # YOUR CODE HERE: call your functions and save/display the requested figures.
     # This block does not run when the grader imports your functions.
-    # Step 1: generate the default dataset (500 samples, seed 0).
-    X = generate_data()
-
-    # Step 2: fit PCA and compute the explained variance fractions.
-    result = pca(X)
-    fractions = explained_variance(result['eigenvalues'])
-
-    # Step 3: print the results (printing is allowed only here).
     np.set_printoptions(precision=4, suppress=True)
-    print('Part 1')
-    for name, value in zip(['AB', 'BA', '(A+B)^T', 'AB^T', 'trace(A)', 'trace(AB)'],
-                           matrix_operations()):
-        print(f'  {name} =\n{value}' if np.ndim(value) else f'  {name} = {value}')
-    values, vectors = eigensystem()
-    print(f'  eigenvalues of M = {values}\n  eigenvectors (columns) =\n{vectors}')
-    print(f'  C^-1 =\n{matrix_inverse()}')
-    print('Part 2')
-    print('  (c, E[X], Var(X)) =', distribution_moments())
-    print('  (P(A and B), P(B|A), P(A or B)) =', event_probabilities())
-    print('  (coin MLE, coin MAP) =', coin_estimates())
-    print('  (Gaussian mean MLE, variance MLE) =', gaussian_mle())
-    print('  Gaussian MAP of mu =', gaussian_map())
-    print('Part 3')
-    print(f'  sample correlation = {np.corrcoef(X, rowvar=False)[0, 1]:.4f}'
-          f' (theory 1.2/sqrt(3) = {1.2 / np.sqrt(3):.4f})')
-    print(f'  mean = {result["mean"]}')
-    print(f'  covariance =\n{result["covariance"]}')
-    print(f'  eigenvalues = {result["eigenvalues"]}')
-    print(f'  components (columns) =\n{result["components"]}')
-    print(f'  explained variance fractions = {fractions}')
 
-    # Step 4: save the figures (saving is allowed only here).
-    make_scatter(X).savefig('data_scatter.png', dpi=150)
-    make_plots(X, result).savefig('pca_plots.png', dpi=150)
-    print('Saved data_scatter.png and pca_plots.png')
+    print('Part 1')
+    AB, BA, sum_transpose, A_Bt, trace_A, trace_AB = matrix_operations()
+    print('AB =\n', AB)
+    print('BA =\n', BA)
+    print('(A + B)^T =\n', sum_transpose)
+    print('A B^T =\n', A_Bt)
+    print('trace(A) =', trace_A, ' trace(AB) =', trace_AB)
+    values, vectors = eigensystem()
+    print('eigenvalues of M =', values)
+    print('eigenvectors of M (columns) =\n', vectors)
+    print('C^-1 =\n', matrix_inverse())
+
+    print('\nPart 2')
+    c, mean, variance = distribution_moments()
+    print(f'c = {c:.6f}, E[X] = {mean}, Var(X) = {variance}')
+    p_and, p_b_given_a, p_or = event_probabilities()
+    print(f'P(A and B) = {p_and:.4f}, P(B|A) = {p_b_given_a:.4f}, '
+          f'P(A or B) = {p_or:.4f}')
+    mle, map_estimate = coin_estimates()
+    print(f'coin MLE = {mle:.4f}, coin MAP = {map_estimate:.4f}')
+    mu_mle, var_mle = gaussian_mle()
+    print(f'Gaussian MLE mean = {mu_mle}, variance = {var_mle}')
+    print(f'Gaussian MAP = {gaussian_map()}')
+
+    print('\nPart 3')
+    X = generate_data()
+    result = pca(X)
+    print('sample mean =', result['mean'])
+    print('sample covariance =\n', result['covariance'])
+    print('sample correlation =', np.corrcoef(X, rowvar=False)[0, 1])
+    print('eigenvalues =', result['eigenvalues'])
+    print('components (columns) =\n', result['components'])
+    print('explained variance fractions =', explained_variance(result['eigenvalues']))
+
+    fig = make_plots(X, result)
+    fig.savefig('pca.png', dpi=150)
+    print('\nSaved figure to pca.png')
